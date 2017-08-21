@@ -27,9 +27,9 @@ Onde v_amb é o nome do ambiente virtual a ser criado.
 # Ativando o ambiente virtual
 
 Além de instalar, é necessário ativar o ambiente virtual que foi criado. Para isto, dentro da pasta do ambiente virtual que foi criado, basta executar o comando:
-
+'''
 $ source bin/activate
-
+'''
 # Desativando o ambiente virtual
 
 Para desativar o ambiente virtual, não importa o diretório que esteja, basta executar o comando:
@@ -40,7 +40,7 @@ $ deactivate
 
 Após o ambiente virtual estar ativo basta executar o comando na pasta raiz do repositório
 
-$ https://github.com/lucastls/Recuperacao_Informacao.git
+$ git clone https://github.com/lucastls/Recuperacao_Informacao.git
 
 # Instalando dependências
 
