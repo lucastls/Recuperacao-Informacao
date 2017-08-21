@@ -1,6 +1,6 @@
 # Recuperacao_Informacao
 
-## Instalar pip
+### Instalar pip
 
 pip é um gerenciador de pacotes para python
 
