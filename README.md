@@ -18,7 +18,7 @@ $ sudo apt-get install python3-venv
 ```
 ### Criando ambiente virtual
 
-Para criar um novo ambiente virtual, basta executar o comando:
+Para criar um novo ambiente virtual, basta executar, na pasta raiz do repositório o comando:
 ```
 $ python3 -m venv v_amb
 ```
