@@ -42,7 +42,7 @@ def checkTimeLastAccess(url, time_now):
 def convert_encoding(data, utf8 = 'UTF-8'):
 	encoding = chardet.detect(data)['encoding']
 	#encoding = chardet.detect(data)['encoding']
-	print (encoding)
+	print ('Codificação: ',encoding)
 	if encoding and utf8.upper() != encoding.upper():
 		#data = data.decode(encoding, data).encode(utf8)
 		return data.decode(encoding).encode(utf8)
@@ -82,8 +82,8 @@ def Download_HTML(url, user_agent, num_tentativas):
 
 	global ServerTime
 
-	time_now = datetime.time()
-
+	time_now = time.time()#datetime.time()
+	print (time_now)
 	last_access = checkTimeLastAccess(url, time_now)
 
 	if last_access == 0:
@@ -137,7 +137,7 @@ def Obter_links(url,depth):
 	print ('Pagina raiz: ',pagRaiz)
 
 	dominio = getDominio(url)
-	print('Dominio: ',dominio)
+	print('Dominio: ',dominio,'\n')
 
 	#Função que determina se os links da lista de links são validos
 	LinksClean = Clean_links(Links,pagRaiz)
@@ -169,22 +169,28 @@ def Obter_links(url,depth):
 
 #LinksQueue é uma lista de tuplas. Elemento da lista: (Dominio,Links)
 LinksQueue=[]
+
+#Dicionario com a hora do ultimo acesso a um servior Ex: {'http://www.globo.com':13:30}
 ServerTime={}
+
+Max_DEPTH = 4
 
 Seeds = ['http://www.globo.com','http://www.r7.com.br']#,'http://www.uai.com.br'
 
 for url in Seeds:
-	#print (url)
-	Obter_links(url,0)
+	Obter_links(url,depth=0)
 
-print('\n',LinksQueue[0][1][0][0],'\n')
+print(LinksQueue[0][1].pop()[0],'\n',sep='')
+
+LinksQueue.reverse()
 
 while NumLinks < 500:
 	for j in range(len(LinksQueue)):
 		for i in range(len(LinksQueue[j])):
-			
-			link = LinksQueue[i][0][0]
-			depth = LinksQueue[i][0][1]
-			Obter_links(link,depth)
+
+			depth = LinksQueue[j][i].pop()[1]
+			if depth < Max_DEPTH:
+				link = LinksQueue[j][i].pop()[0]
+				Obter_links(link,depth)
 
 print ("Numero total de links",NumLinks)
