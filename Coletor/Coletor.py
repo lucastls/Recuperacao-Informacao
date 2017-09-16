@@ -1,7 +1,7 @@
 from lxml import etree, cssselect, html
 from urllib.error import URLError, HTTPError, ContentTooShortError
 import urllib.request
-import chardet
+import cchardet
 from urllib import robotparser
 import datetime
 import time
@@ -40,11 +40,9 @@ def checkTimeLastAccess(url, time_now):
 	return 0
 
 def convert_encoding(data, utf8 = 'UTF-8'):
-	encoding = chardet.detect(data)['encoding']
-	#encoding = chardet.detect(data)['encoding']
+	encoding = cchardet.detect(data)['encoding']
 	print ('Codificação: ',encoding)
 	if encoding and utf8.upper() != encoding.upper():
-		#data = data.decode(encoding, data).encode(utf8)
 		return data.decode(encoding).encode(utf8)
 	else:
 		return data
@@ -78,7 +76,7 @@ def getPagRaiz(url):
 def getDominio(url):
 	return url.split('.')[1].split('.')[0]
 
-def Download_HTML(url, user_agent, num_tentativas):
+def Download_HTML(url, user_agent, num_retries):
 
 	global ServerTime
 
@@ -101,16 +99,17 @@ def Download_HTML(url, user_agent, num_tentativas):
 		except (URLError, HTTPError, ContentTooShortError) as error:
 			print('Erro: ',error)
 			html = None
-			if num_tentativas > 0:
+			if num_retries > 0:
 				if hasattr(error, 'code') and (500 <= error.code < 600):
 					# recursivavmente tenta de novo para erros HTTP 5xx
 					return Download_HTML(url, user_agent, num_retries - 1)
 
-		return htmldoc
-
 	else:
 		time.sleep(last_access)
-		Download_HTML(url, user_agent, num_tentativas)
+		print ('Esperando',last_access,'s')
+		Download_HTML(url, user_agent, num_retries)
+
+	return htmldoc
 
 def Obter_links(url,depth):
 
@@ -170,15 +169,15 @@ def Obter_links(url,depth):
 #LinksQueue é uma lista de tuplas. Elemento da lista: (Dominio,Links)
 LinksQueue=[]
 
-#Dicionario com a hora do ultimo acesso a um servior Ex: {'http://www.globo.com':13:30}
+#Dicionario com a hora do ultimo acesso a um servior,em segundos. Ex: {'http://www.globo.com':1505571681.6166034}
 ServerTime={}
 
 Max_DEPTH = 4
 
-Seeds = ['http://www.globo.com','http://www.r7.com.br']#,'http://www.uai.com.br'
+Seeds = ['http://www.uai.com.br','http://www.globo.com','http://www.r7.com.br']#,'http://www.uai.com.br'
 
 for url in Seeds:
-	Obter_links(url,depth=0)
+		Obter_links(url,depth=0)
 
 print(LinksQueue[0][1].pop()[0],'\n',sep='')
 
@@ -186,11 +185,13 @@ LinksQueue.reverse()
 
 while NumLinks < 500:
 	for j in range(len(LinksQueue)):
-		for i in range(len(LinksQueue[j])):
-
-			depth = LinksQueue[j][i].pop()[1]
+		i=0
+		while (len(LinksQueue[j]) > 0):
+			tp = LinksQueue[j][i].pop()
+			depth = tp[1]
 			if depth < Max_DEPTH:
-				link = LinksQueue[j][i].pop()[0]
+				link = tp[0]
 				Obter_links(link,depth)
+			i+=1
 
 print ("Numero total de links",NumLinks)
