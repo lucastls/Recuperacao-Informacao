@@ -76,6 +76,10 @@ def getPagRaiz(url):
 def getDominio(url):
 	return url.split('.')[1].split('.')[0]
 
+def addVisited(url,access_time):
+	global Visited
+	Visited[url] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(access_time))
+
 def Download_HTML(url, user_agent, num_retries):
 
 	global ServerTime
@@ -93,9 +97,7 @@ def Download_HTML(url, user_agent, num_retries):
 
 		try:
 			htmldoc = urllib.request.urlopen(htmldoc).read()
-			#print(chardet.detect(htmldoc)['encoding'])
-			#c=input('Para') Windows-1252
-			htmldoc = convert_encoding(htmldoc).decode()
+			addVisited(url, time_now)
 		except (URLError, HTTPError, ContentTooShortError) as error:
 			print('Erro: ',error)
 			html = None
@@ -119,7 +121,8 @@ def Obter_links(url,depth):
 
 	#Verifica robots.txt da pagina
 	rp = robots(url)
-	if rp.can_fetch(user_agent, url):
+
+	if rp.can_fetch(user_agent, url) and url not in Visited:
 		htmldoc = Download_HTML(url,user_agent,2)
 	else:
 		print('Bloqueada pelo robots.txt:', url)
@@ -143,9 +146,9 @@ def Obter_links(url,depth):
 	del Links
 
 	if NumLinks < 500:
-		LinksClean_size = 500 - NumLinks
-		if len(LinksClean) > LinksClean_size:
-			LinksClean = LinksClean[0:LinksClean_size]
+		NumLinks_remaining = 500 - NumLinks
+		if len(LinksClean) > NumLinks_remaining:
+			LinksClean = LinksClean[0:NumLinks_remaining]
 
 	#Atualiza a contagem de links
 	setNumLinks(LinksClean,NumLinks)
@@ -166,20 +169,23 @@ def Obter_links(url,depth):
 	else:
 		LinksQueue.append((dominio,LinksD))
 
-#LinksQueue é uma lista de tuplas. Elemento da lista: (Dominio,Links)
+#LinksQueue é uma lista de tuplas. Elemento da lista: (Dominio, Lista de Links)
 LinksQueue=[]
 
 #Dicionario com a hora do ultimo acesso a um servior,em segundos. Ex: {'http://www.globo.com':1505571681.6166034}
 ServerTime={}
 
+#Visited
+Visited={}
+
 Max_DEPTH = 4
 
-Seeds = ['http://www.uai.com.br','http://www.globo.com','http://www.r7.com.br']#,'http://www.uai.com.br'
+Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br']#,'http://www.uai.com.br'
 
 for url in Seeds:
 		Obter_links(url,depth=0)
 
-print(LinksQueue[0][1].pop()[0],'\n',sep='')
+#print(LinksQueue[0][1].pop()[0],'\n',sep='')
 
 LinksQueue.reverse()
 
@@ -193,5 +199,5 @@ while NumLinks < 500:
 				link = tp[0]
 				Obter_links(link,depth)
 			i+=1
-
+print (Visited)
 print ("Numero total de links",NumLinks)
