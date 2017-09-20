@@ -12,10 +12,8 @@ def getIndexOfTuple(l, index, value):
     for pos,t in enumerate(l):
         if t[index] == value:
             return pos
-
     # Matches behavior of list.index
     raise ValueError("list.index(x): x not in list")
-
 getIndexOfTuple(tuple_list, 0, "cherry")   # = 1
 """
 
@@ -29,6 +27,10 @@ def robots(url):
 	parser.read()
 
 	return parser
+
+def robotsParse():
+#http://www.botreports.com/p/python-urllib.shtml
+    
 
 def checkTimeLastAccess(url, time_now):
 
@@ -169,7 +171,7 @@ def Obter_links(url,depth):
 	else:
 		LinksQueue.append((dominio,LinksD))
 
-#LinksQueue é uma lista de tuplas. Elemento da lista: (Dominio, Lista de Links)
+#LinksQueue é uma lista de tuplas, onde cada tupla possui o dominio e a lista de links do determinado dominio. Elemento da lista: (Dominio, Lista de Links)
 LinksQueue=[]
 
 #Dicionario com a hora do ultimo acesso a um servior,em segundos. Ex: {'http://www.globo.com':1505571681.6166034}
@@ -199,5 +201,8 @@ while NumLinks < 500:
 				link = tp[0]
 				Obter_links(link,depth)
 			i+=1
-print (Visited)
+
+for j in [0,1,2]:
+    for i in LinksQueue[j][1]:
+        print (i)
 print ("Numero total de links",NumLinks)

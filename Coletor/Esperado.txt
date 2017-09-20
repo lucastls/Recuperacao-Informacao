@@ -1,0 +1,16 @@
+As paginas ficam em uma fila única (Resposta Esperada: Sim)? 
+São coletadas por busca em largura (Resposta Esperada: Sim)? 
+A msma url pode ser coletada mais de uma vez (Resposta Esperada: Não)? 
+Um servidor poderá ser acessado novamente em menos de 30 segundos (Resposta Esperada: Não)?  
+Multiplas threads (Resposta Esperada: Sim)? 
+Dado a página coletada, extrair seus links e inserir na fila do
+escalonador todas as páginas coletadas (Resposta Esperada: Sim)? 
+Obedece os protocolos de exclusão de robôs.txt (Resposta Esperada: Sim)?
+Obedece os critérios “noindex” e “nofolow” das metatags de cada html extraído (Resposta Esperada: Sim)?
+Armazena a lista de URLs coletadas (Resposta Esperada: Sim)?
+Criar um nome no “User agent” (Resposta Esperada: Sim)
+
+Obedece a: 
+Número máximo de páginas (500 páginas) (Resposta Esperada: Sim)? 
+Profundidade por domínio (4 páginas) (Resposta Esperada: Sim)? 
+Número de threads utilizado (Resposta Esperada: Mais que um)? 
