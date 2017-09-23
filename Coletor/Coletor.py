@@ -1,6 +1,6 @@
 from lxml import etree, cssselect, html
 from urllib.error import URLError, HTTPError, ContentTooShortError
-import urllib.request
+import urllib.request, urllib.parse, urllib.error
 import cchardet
 from urllib import robotparser
 import datetime
@@ -28,9 +28,12 @@ def robots(url):
 
 	return parser
 
-def robotsParse():
-#http://www.botreports.com/p/python-urllib.shtml
-    
+def noindex_nofollow(url):
+    fhand = urllib.request.urlopen(url).read().decode().strip()
+    for line in fhand:
+        if not line.startswith('<meta'): continue
+        if noindex or nofollow in line: return 0
+    return 1
 
 def checkTimeLastAccess(url, time_now):
 
@@ -123,11 +126,13 @@ def Obter_links(url,depth):
 
 	#Verifica robots.txt da pagina
 	rp = robots(url)
+    #Verifica nofollow e noindex nos metatags de cada url
+	meta = noindex_nofollow(url)
 
-	if rp.can_fetch(user_agent, url) and url not in Visited:
+	if rp.can_fetch(user_agent, url) and url not in Visited and meta:
 		htmldoc = Download_HTML(url,user_agent,2)
 	else:
-		print('Bloqueada pelo robots.txt:', url)
+		print('Bloqueada pelo protocolo de exlusão de robôs:', url)
 
 	tree = html.fromstring(htmldoc) # parse the HTML and fixes it
 	htmldoc = html.tostring(tree, pretty_print=True)
