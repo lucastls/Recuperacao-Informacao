@@ -7,26 +7,12 @@ import datetime
 import time
 import threading
 
-"""
-# Stops iterating through the list as soon as it finds the value
-def getIndexOfTuple(l, index, value):
-    for pos,t in enumerate(l):
-        if t[index] == value:
-            return pos
-    # Matches behavior of list.index
-    raise ValueError("list.index(x): x not in list")
-getIndexOfTuple(tuple_list, 0, "cherry")   # = 1
-"""
-
 NumLinks=0
- 
 def robots(url):
-
 	parser = robotparser.RobotFileParser()
 	robots_url = url+'/robots.txt'
 	parser.set_url(robots_url)
 	parser.read()
-
 	return parser
 
 def noindex_nofollow(url):
@@ -60,7 +46,6 @@ def setNumLinks(Links, NumLinks_antigo):
 def Clean_links(Links,pagRaiz):
 	LinksClean=[]
 	for i in range(len(Links)-1):
-		#print (Links[i][0])
 		if len(Links[i]) < 2:
 			continue
 		if Links[i][0:2]=='//':
@@ -73,7 +58,6 @@ def Clean_links(Links,pagRaiz):
 		if len(Links[i]) > 0 and Links[i][0]=='':
 			continue
 		LinksClean.append(Links[i])
-
 	return LinksClean
 
 def getPagRaiz(url):
@@ -87,17 +71,13 @@ def addVisited(url,access_time):
 	Visited[url] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(access_time))
 
 def Download_HTML(url, user_agent, num_retries):
-
 	global ServerTime
-
-	time_now = time.time()#datetime.time()
+	time_now = time.time() #Datetime.time()
 	print (time_now)
 	last_access = checkTimeLastAccess(url, time_now)
 
 	if last_access == 0:
-
 		ServerTime[url] = time_now
-
 		htmldoc = urllib.request.Request(url)
 		htmldoc.add_header('User-agent', user_agent)
 
@@ -109,33 +89,26 @@ def Download_HTML(url, user_agent, num_retries):
 			html = None
 			if num_retries > 0:
 				if hasattr(error, 'code') and (500 <= error.code < 600):
-					# recursivavmente tenta de novo para erros HTTP 5xx
-					return Download_HTML(url, user_agent, num_retries - 1)
+					return Download_HTML(url, user_agent, num_retries - 1) # Recursivavmente tenta de novo para erros HTTP 5xx
 
 	else:
 		time.sleep(last_access)
 		print ('Esperando',last_access,'s')
 		Download_HTML(url, user_agent, num_retries)
-
 	return htmldoc
 
 def Obter_links(url,depth):
-
 	user_agent = 'elmbot'
-
 	global NumLinks
-
-	#Verifica robots.txt da pagina
-	rp = robots(url)
-    #Verifica nofollow e noindex nos metatags da pagina
-	meta = noindex_nofollow(url)
+	rp = robots(url) #Verifica robots.txt da pagina
+	meta = noindex_nofollow(url) #Verifica nofollow e noindex nos metatags da pagina
 
 	if rp.can_fetch(user_agent, url) and url not in Visited and meta:
 		htmldoc = Download_HTML(url,user_agent,2)
 	else:
 		print('Bloqueada pelo protocolo de exlusão de robôs:', url)
 
-	tree = html.fromstring(htmldoc) # parse the HTML and fixes it
+	tree = html.fromstring(htmldoc) #Parse o HTML e arruma se necessario
 	htmldoc = html.tostring(tree, pretty_print=True)
 	htmldoc = html.fromstring(htmldoc)
 
@@ -149,8 +122,7 @@ def Obter_links(url,depth):
 	dominio = getDominio(url)
 	print('Dominio: ',dominio,'\n')
 
-	#Função que determina se os links da lista de links são validos
-	LinksClean = Clean_links(Links,pagRaiz)
+	LinksClean = Clean_links(Links,pagRaiz) #Função que determina se os links da lista de links são validos
 	del Links
 
 	if NumLinks < 500:
@@ -158,62 +130,34 @@ def Obter_links(url,depth):
 		if len(LinksClean) > NumLinks_remaining:
 			LinksClean = LinksClean[0:NumLinks_remaining]
 
-	#Atualiza a contagem de links
-	setNumLinks(LinksClean,NumLinks)
+	setNumLinks(LinksClean,NumLinks) #Atualiza a contagem de links
+	LinksD = [ (link,depth+1) for link in LinksClean ] #LinksD é uma lista de tuplas. Elemento da lista: (Link,Profundidade)
 
-	#LinksD é uma lista de tuplas. Elemento da lista: (Link,Profundidade)
-	LinksD = [ (link,depth+1) for link in LinksClean ]
-
-	#Verifica se o dominio ja esta na fila de links
-	try:
+	try: #Verifica se o dominio ja esta na fila de links
 		pos = [i[0] for i in LinksQueue].index(dominio)
 	except:
 		pos = -1
-
-	#Se o dominio ja esta na fila de links acrescesta os links na sua fila, caso contrario a sua lista é criada
-	if pos > -1:
+	if pos > -1: #Se o dominio ja esta na fila de links acrescesta os links na sua fila, caso contrario a sua lista é criada
 		PLinks = LinksQueue[pos][1]
 		LinksQueue[pos][1] = PLinks+LinksD
 	else:
 		LinksQueue.append((dominio,LinksD))
 
-#LinksQueue é uma lista de tuplas, onde cada tupla possui o dominio e a lista de links do determinado dominio. Elemento da lista: (Dominio, Lista de Links)
-LinksQueue=[]
+LinksQueue=[] #LinksQueue é uma lista de tuplas, onde cada tupla possui o dominio e a lista de links do determinado dominio. Elemento da lista: (Dominio, Lista de Links)
+ServerTime={} #Dicionario com a hora do ultimo acesso a um servior,em segundos. Ex: {'http://www.globo.com':1505571681.6166034}
+Visited={} #Dicionario de Visitados
+jobs = [] #Lista para as threads
+Max_DEPTH = 4 #Profundidade maxima
+threads = 3 #Numero de threads
+Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br'] #Urls de origem
 
-#Dicionario com a hora do ultimo acesso a um servior,em segundos. Ex: {'http://www.globo.com':1505571681.6166034}
-ServerTime={}
-
-#Visited
-Visited={}
-
-#Lista de threads
-jobs = []
-
-#Profundidade maxima
-Max_DEPTH = 4
-
-#Numero de threads
-threads = 3
-
-#Urls de origem
-Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br']#,'http://www.uai.com.br'
-
-for i in [0,1,2]:
+for i in [0,1,2]: #Criamos as threads e atribuimos a função de cada uma
 	thread = threading.Thread(target=Obter_links(Seeds[i],depth=0))
 	jobs.append(thread)
-
-# Start the threads (i.e. calculate the random number lists)
-for j in jobs:
+for j in jobs: #Começa as Threads
 	j.start()
-
-# Ensure all of the threads have finished
-for j in jobs:
+for j in jobs: #Assegura que todas as threads terminaram
 	j.join()
-
-#for url in Seeds:
-#		Obter_links(url,depth=0)
-
-#print(LinksQueue[0][1].pop()[0],'\n',sep='')
 LinksQueue.reverse()
 
 while NumLinks < 500:
@@ -231,3 +175,13 @@ for j in [0,1,2]:
     for i in LinksQueue[j][1]:
         print (i)
 print ("Numero total de links",NumLinks)
+"""
+# Stops iterating through the list as soon as it finds the value
+def getIndexOfTuple(l, index, value):
+    for pos,t in enumerate(l):
+        if t[index] == value:
+            return pos
+    # Matches behavior of list.index
+    raise ValueError("list.index(x): x not in list")
+getIndexOfTuple(tuple_list, 0, "cherry")   # = 1
+"""
