@@ -5,6 +5,7 @@ import cchardet
 from urllib import robotparser
 import datetime
 import time
+import threading
 
 """
 # Stops iterating through the list as soon as it finds the value
@@ -18,7 +19,7 @@ getIndexOfTuple(tuple_list, 0, "cherry")   # = 1
 """
 
 NumLinks=0
-
+ 
 def robots(url):
 
 	parser = robotparser.RobotFileParser()
@@ -126,7 +127,7 @@ def Obter_links(url,depth):
 
 	#Verifica robots.txt da pagina
 	rp = robots(url)
-    #Verifica nofollow e noindex nos metatags de cada url
+    #Verifica nofollow e noindex nos metatags da pagina
 	meta = noindex_nofollow(url)
 
 	if rp.can_fetch(user_agent, url) and url not in Visited and meta:
@@ -185,15 +186,34 @@ ServerTime={}
 #Visited
 Visited={}
 
+#Lista de threads
+jobs = []
+
+#Profundidade maxima
 Max_DEPTH = 4
 
+#Numero de threads
+threads = 3
+
+#Urls de origem
 Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br']#,'http://www.uai.com.br'
 
-for url in Seeds:
-		Obter_links(url,depth=0)
+for i in [0,1,2]:
+	thread = threading.Thread(target=Obter_links(Seeds[i],depth=0))
+	jobs.append(thread)
+
+# Start the threads (i.e. calculate the random number lists)
+for j in jobs:
+	j.start()
+
+# Ensure all of the threads have finished
+for j in jobs:
+	j.join()
+
+#for url in Seeds:
+#		Obter_links(url,depth=0)
 
 #print(LinksQueue[0][1].pop()[0],'\n',sep='')
-
 LinksQueue.reverse()
 
 while NumLinks < 500:
