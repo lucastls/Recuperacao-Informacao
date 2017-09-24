@@ -34,8 +34,16 @@ def treads(Seeds, jobs, threads):
 	for j in jobs: #Assegura que todas as threads terminaram
 		j.join()
 
-def checkTimeLastAccess(url, time_now):
+def archiveCreator(LinksQueue, tam):
+	arch = open('Links_Coletados.txt', 'w')
+	for j in range(tam):
+		for i in LinksQueue[j][1]:
+			stri = i[0] + '\n'			
+			arch.write(stri)
+	print ("Numero total de links",NumLinks)
+	arch.close()
 
+def checkTimeLastAccess(url, time_now):
 	if url in ServerTime.keys():
 		if time_now - ServerTime[url] > 30:
 			return 0
@@ -177,12 +185,4 @@ while NumLinks < 500:
 				link = tp[0]
 				Obter_links(link,depth)
 			i+=1
-
-for j in [0,1,2]:
-    for i in LinksQueue[j][1]:
-        print (i)
-print ("Numero total de links",NumLinks)
-for j in [0,1,2]:
-    for i in LinksQueue[j][1]:
-        print (i)
-print ("Numero total de links",NumLinks)
+archiveCreator(LinksQueue, int(len(Seeds)))
