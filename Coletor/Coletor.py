@@ -7,7 +7,6 @@ import datetime
 import time
 import threading
 
-NumLinks=0
 def robots(url):
 	parser = robotparser.RobotFileParser()
 	robots_url = url+'/robots.txt'
@@ -21,6 +20,19 @@ def noindex_nofollow(url):
         if not line.startswith('<meta'): continue
         if noindex or nofollow in line: return 0
     return 1
+
+def treads(Seeds, jobs, threads):
+	for i in range(threads): #Criamos as threads e atribuimos a função de cada uma
+		try:
+			thread = threading.Thread(target=Obter_links(Seeds[i],depth=0))
+			jobs.append(thread)
+		except:
+			print ('Erro na criação das threads!')
+			break
+	for j in jobs: #Começa as Threads
+		j.start()
+	for j in jobs: #Assegura que todas as threads terminaram
+		j.join()
 
 def checkTimeLastAccess(url, time_now):
 
@@ -143,21 +155,16 @@ def Obter_links(url,depth):
 	else:
 		LinksQueue.append((dominio,LinksD))
 
-LinksQueue=[] #LinksQueue é uma lista de tuplas, onde cada tupla possui o dominio e a lista de links do determinado dominio. Elemento da lista: (Dominio, Lista de Links)
-ServerTime={} #Dicionario com a hora do ultimo acesso a um servior,em segundos. Ex: {'http://www.globo.com':1505571681.6166034}
-Visited={} #Dicionario de Visitados
+NumLinks = 0
+LinksQueue = [] #LinksQueue é uma lista de tuplas, onde cada tupla possui o dominio e a lista de links do determinado dominio. 
+                #Elemento da lista: (Dominio, Lista de Links)
+ServerTime = {} #Dicionario com a hora do ultimo acesso a um servior,em segundos. Ex: {'http://www.globo.com':1505571681.6166034}
+Visited = {} #Dicionario de Visitados
 jobs = [] #Lista para as threads
 Max_DEPTH = 4 #Profundidade maxima
 threads = 3 #Numero de threads
 Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br'] #Urls de origem
-
-for i in [0,1,2]: #Criamos as threads e atribuimos a função de cada uma
-	thread = threading.Thread(target=Obter_links(Seeds[i],depth=0))
-	jobs.append(thread)
-for j in jobs: #Começa as Threads
-	j.start()
-for j in jobs: #Assegura que todas as threads terminaram
-	j.join()
+treads(Seeds, jobs, threads)
 LinksQueue.reverse()
 
 while NumLinks < 500:
@@ -175,13 +182,7 @@ for j in [0,1,2]:
     for i in LinksQueue[j][1]:
         print (i)
 print ("Numero total de links",NumLinks)
-"""
-# Stops iterating through the list as soon as it finds the value
-def getIndexOfTuple(l, index, value):
-    for pos,t in enumerate(l):
-        if t[index] == value:
-            return pos
-    # Matches behavior of list.index
-    raise ValueError("list.index(x): x not in list")
-getIndexOfTuple(tuple_list, 0, "cherry")   # = 1
-"""
+for j in [0,1,2]:
+    for i in LinksQueue[j][1]:
+        print (i)
+print ("Numero total de links",NumLinks)
