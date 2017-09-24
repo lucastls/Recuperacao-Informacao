@@ -34,13 +34,18 @@ def treads(Seeds, jobs, threads):
 	for j in jobs: #Assegura que todas as threads terminaram
 		j.join()
 
-def archiveCreator(LinksQueue, tam):
-	arch = open('Links_Coletados.txt', 'w')
+#def archiveCreator():
+#	arch = open('Links_Coletados.txt', 'w')		
+
+def archiveLinks(LinksQueue, tam):
+	arch = open('Links_Coletados.txt', 'a')
+	stri = stri2 = ''
 	for j in range(tam):
 		for i in LinksQueue[j][1]:
-			stri = i[0] + '\n'			
-			arch.write(stri)
-	print ("Numero total de links",NumLinks)
+			stri = stri + i[0] + '\n'
+		stri2 = stri2 + stri			
+	arch.write(stri2)	
+	print ("Numero total de links coletados:", NumLinks)
 	arch.close()
 
 def checkTimeLastAccess(url, time_now):
@@ -134,6 +139,7 @@ def Obter_links(url,depth):
 
 	get_links = cssselect.CSSSelector('a')
 	Links = [ link.get('href') for link in get_links(htmldoc)]
+
 	print ('Numero de Links: ',len(Links))
 
 	pagRaiz = getPagRaiz(url)
@@ -185,4 +191,4 @@ while NumLinks < 500:
 				link = tp[0]
 				Obter_links(link,depth)
 			i+=1
-archiveCreator(LinksQueue, int(len(Seeds)))
+archiveLinks(LinksQueue, int(len(Seeds)))
