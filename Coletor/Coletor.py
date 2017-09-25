@@ -24,7 +24,7 @@ def noindex_nofollow(url):
 def treads(Seeds, jobs, threads):
 	for i in range(threads): #Criamos as threads e atribuimos a função de cada uma
 		try:
-			thread = threading.Thread(target=Obter_links(Seeds[i],depth=0))
+			thread = threading.Thread(target=obter_links(Seeds[i],depth=0))
 			jobs.append(thread)
 		except:
 			print ('Erro na criação das threads!')
@@ -33,9 +33,6 @@ def treads(Seeds, jobs, threads):
 		j.start()
 	for j in jobs: #Assegura que todas as threads terminaram
 		j.join()
-
-#def archiveCreator():
-#	arch = open('Links_Coletados.txt', 'w')		
 
 def archiveLinks(LinksQueue, tam):
 	arch = open('Links_Coletados.txt', 'a')
@@ -68,7 +65,7 @@ def setNumLinks(Links, NumLinks_antigo):
 	global NumLinks
 	NumLinks = NumLinks_antigo + int(len(Links))
 
-def Clean_links(Links,pagRaiz):
+def clean_links(Links, pagRaiz):
 	LinksClean=[]
 	for i in range(len(Links)-1):
 		if len(Links[i]) < 2:
@@ -95,7 +92,7 @@ def addVisited(url,access_time):
 	global Visited
 	Visited[url] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(access_time))
 
-def Download_HTML(url, user_agent, num_retries):
+def download_HTML(url, user_agent, num_retries):
 	global ServerTime
 	time_now = time.time() #Datetime.time()
 	print (time_now)
@@ -114,22 +111,22 @@ def Download_HTML(url, user_agent, num_retries):
 			html = None
 			if num_retries > 0:
 				if hasattr(error, 'code') and (500 <= error.code < 600):
-					return Download_HTML(url, user_agent, num_retries - 1) # Recursivavmente tenta de novo para erros HTTP 5xx
+					return download_HTML(url, user_agent, num_retries - 1) # Recursivavmente tenta de novo para erros HTTP 5xx
 
 	else:
 		time.sleep(last_access)
 		print ('Esperando',last_access,'s')
-		Download_HTML(url, user_agent, num_retries)
+		download_HTML(url, user_agent, num_retries)
 	return htmldoc
 
-def Obter_links(url,depth):
+def obter_links(url, depth):
 	user_agent = 'elmbot'
 	global NumLinks
 	rp = robots(url) #Verifica robots.txt da pagina
 	meta = noindex_nofollow(url) #Verifica nofollow e noindex nos metatags da pagina
 
 	if rp.can_fetch(user_agent, url) and url not in Visited and meta:
-		htmldoc = Download_HTML(url,user_agent,2)
+		htmldoc = download_HTML(url,user_agent,2)
 	else:
 		print('Bloqueada pelo protocolo de exlusão de robôs:', url)
 
@@ -140,15 +137,12 @@ def Obter_links(url,depth):
 	get_links = cssselect.CSSSelector('a')
 	Links = [ link.get('href') for link in get_links(htmldoc)]
 
-	print ('Numero de Links: ',len(Links))
-
+	print ('Numero de Links disponíveis:', len(Links))
 	pagRaiz = getPagRaiz(url)
-	print ('Pagina raiz: ',pagRaiz)
-
+	print ('Pagina raiz:', pagRaiz)
 	dominio = getDominio(url)
-	print('Dominio: ',dominio,'\n')
-
-	LinksClean = Clean_links(Links,pagRaiz) #Função que determina se os links da lista de links são validos
+	print('Dominio:', dominio,'\n')
+	LinksClean = clean_links(Links,pagRaiz) #Função que determina se os links da lista de links são validos
 	del Links
 
 	if NumLinks < 500:
@@ -189,6 +183,6 @@ while NumLinks < 500:
 			depth = tp[1]
 			if depth < Max_DEPTH:
 				link = tp[0]
-				Obter_links(link,depth)
+				obter_links(link,depth)
 			i+=1
 archiveLinks(LinksQueue, int(len(Seeds)))
