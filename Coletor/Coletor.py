@@ -42,9 +42,9 @@ def archiveLinks(LinksQueue, tam):
 		for i in LinksQueue[j][1]:
 			total.append(i[0])
 	total = list(set(total))
-
 	for j in range(len(total)):
-		stri = stri + total[j] + '\n'			
+		if total[j].startswith('http') or total[j].startswith('https'):
+			stri = stri + total[j] + '\n'			
 	arch.write(stri)	
 	print ("Numero total de links coletados:", len(total))
 	arch.close()
