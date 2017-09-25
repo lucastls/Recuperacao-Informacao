@@ -24,7 +24,7 @@ def noindex_nofollow(url):
 def treads(Seeds, jobs, threads):
 	for i in range(threads): #Criamos as threads e atribuimos a função de cada uma
 		try:
-			thread = threading.Thread(target=obter_links(Seeds[i],depth=0))
+			thread = threading.Thread(target=get_links(Seeds[i],depth=0))
 			jobs.append(thread)
 		except:
 			print ('Erro na criação das threads!')
@@ -35,7 +35,7 @@ def treads(Seeds, jobs, threads):
 		j.join()
 
 def archiveLinks(LinksQueue, tam):
-	arch = open('Links_Coletados.txt', 'a')
+	arch = open('Links_Coletados.txt', 'w')
 	stri = ''
 	total = list()
 	for j in range(tam):
@@ -46,7 +46,7 @@ def archiveLinks(LinksQueue, tam):
 	for j in range(len(total)):
 		stri = stri + total[j] + '\n'			
 	arch.write(stri)	
-	print ("Numero total de links coletados:", NumLinks)
+	print ("Numero total de links coletados:", len(total))
 	arch.close()
 
 def checkTimeLastAccess(url, time_now):
@@ -99,7 +99,7 @@ def addVisited(url,access_time):
 def download_HTML(url, user_agent, num_retries):
 	global ServerTime
 	time_now = time.time() #Datetime.time()
-	print (time_now)
+	print ('Tempo atual:', time_now)
 	last_access = checkTimeLastAccess(url, time_now)
 
 	if last_access == 0:
@@ -123,7 +123,7 @@ def download_HTML(url, user_agent, num_retries):
 		download_HTML(url, user_agent, num_retries)
 	return htmldoc
 
-def obter_links(url, depth):
+def get_links(url, depth):
 	user_agent = 'elmbot'
 	global NumLinks
 	rp = robots(url) #Verifica robots.txt da pagina
@@ -187,6 +187,6 @@ while NumLinks < 500:
 			depth = tp[1]
 			if depth < Max_DEPTH:
 				link = tp[0]
-				obter_links(link,depth)
+				get_links(link,depth)
 			i+=1
 archiveLinks(LinksQueue, int(len(Seeds)))
