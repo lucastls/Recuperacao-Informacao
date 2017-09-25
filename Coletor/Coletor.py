@@ -36,12 +36,16 @@ def treads(Seeds, jobs, threads):
 
 def archiveLinks(LinksQueue, tam):
 	arch = open('Links_Coletados.txt', 'a')
-	stri = stri2 = ''
+	stri = ''
+	total = list()
 	for j in range(tam):
 		for i in LinksQueue[j][1]:
-			stri = stri + i[0] + '\n'
-		stri2 = stri2 + stri			
-	arch.write(stri2)	
+			total.append(i[0])
+	total = list(set(total))
+
+	for j in range(len(total)):
+		stri = stri + total[j] + '\n'			
+	arch.write(stri)	
 	print ("Numero total de links coletados:", NumLinks)
 	arch.close()
 
