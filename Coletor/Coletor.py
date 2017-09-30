@@ -44,8 +44,8 @@ def archiveLinks(LinksQueue, tam):
 	total = list(set(total))
 	for j in range(len(total)):
 		if total[j].startswith('http') or total[j].startswith('https'):
-			stri = stri + total[j] + '\n'			
-	arch.write(stri)	
+			stri = stri + total[j] + '\n'
+	arch.write(stri)
 	print ("Numero total de links coletados:", len(total))
 	arch.close()
 
@@ -72,18 +72,12 @@ def setNumLinks(Links, NumLinks_antigo):
 def clean_links(Links, pagRaiz):
 	LinksClean=[]
 	for i in range(len(Links)-1):
-		if len(Links[i]) < 2:
-			continue
-		if Links[i][0:2]=='//':
-			continue
+
 		if len(Links[i]) > 2 and Links[i][0]=='/' and Links[i][1]!='/':
 			Links[i]=pagRaiz+Links[i]
 
-		if len(Links[i]) > 0 and Links[i][0]=='#':
-			continue
-		if len(Links[i]) > 0 and Links[i][0]=='':
-			continue
-		LinksClean.append(Links[i])
+		if Links[i].startswith('http') or Links[i].startswith('https'):
+			LinksClean.append(Links[i])
 	return LinksClean
 
 def getPagRaiz(url):
@@ -99,7 +93,7 @@ def addVisited(url,access_time):
 def download_HTML(url, user_agent, num_retries):
 	global ServerTime
 	time_now = time.time() #Datetime.time()
-	print ('Tempo atual:', time_now)
+	print ('Hora atual:', time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time_now)))
 	last_access = checkTimeLastAccess(url, time_now)
 
 	if last_access == 0:
@@ -141,6 +135,8 @@ def get_links(url, depth):
 	get_links = cssselect.CSSSelector('a')
 	Links = [ link.get('href') for link in get_links(htmldoc)]
 
+	Links=list(set(Links))
+
 	print ('Numero de Links disponíveis:', len(Links))
 	pagRaiz = getPagRaiz(url)
 	print ('Pagina raiz:', pagRaiz)
@@ -155,7 +151,8 @@ def get_links(url, depth):
 			LinksClean = LinksClean[0:NumLinks_remaining]
 
 	setNumLinks(LinksClean,NumLinks) #Atualiza a contagem de links
-	LinksD = [ (link,depth+1) for link in LinksClean ] #LinksD é uma lista de tuplas. Elemento da lista: (Link,Profundidade)
+	#print('Numero de links coletados: ',NumLinks)
+	LinksD = [ [link,depth+1] for link in LinksClean ] #LinksD é uma lista de tuplas. Elemento da lista: (Link,Profundidade)
 
 	try: #Verifica se o dominio ja esta na fila de links
 		pos = [i[0] for i in LinksQueue].index(dominio)
@@ -165,28 +162,34 @@ def get_links(url, depth):
 		PLinks = LinksQueue[pos][1]
 		LinksQueue[pos][1] = PLinks+LinksD
 	else:
-		LinksQueue.append((dominio,LinksD))
+		LinksQueue.append([dominio,LinksD])
 
 NumLinks = 0
-LinksQueue = [] #LinksQueue é uma lista de tuplas, onde cada tupla possui o dominio e a lista de links do determinado dominio. 
+LinksQueue = [] #LinksQueue é uma lista de tuplas, onde cada tupla possui o dominio e a lista de links do determinado dominio.
                 #Elemento da lista: (Dominio, Lista de Links)
 ServerTime = {} #Dicionario com a hora do ultimo acesso a um servior,em segundos. Ex: {'http://www.globo.com':1505571681.6166034}
-Visited = {} #Dicionario de Visitados
-jobs = [] #Lista para as threads
-Max_DEPTH = 4 #Profundidade maxima
-threads = 3 #Numero de threads
-Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br'] #Urls de origem
-treads(Seeds, jobs, threads)
-LinksQueue.reverse()
 
+Visited = {} #Dicionario de Visitados
+
+jobs = [] #Lista para as threads
+
+Max_DEPTH = 4 #Profundidade maxima
+
+threads = 3 #Numero de threads
+
+Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br'] #Urls de origem
+
+treads(Seeds, jobs, threads)
+
+LinksQueue.reverse()
+'''
 while NumLinks < 500:
 	for j in range(len(LinksQueue)):
-		i=0
 		while (len(LinksQueue[j]) > 0):
-			tp = LinksQueue[j][i].pop()
+			tp = LinksQueue[j][1].pop()
 			depth = tp[1]
 			if depth < Max_DEPTH:
 				link = tp[0]
 				get_links(link,depth)
-			i+=1
+'''
 archiveLinks(LinksQueue, int(len(Seeds)))
