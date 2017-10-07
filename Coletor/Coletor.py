@@ -21,14 +21,28 @@ def noindex_nofollow(url):
         if noindex or nofollow in line: return 0
     return 1
 
-def treads(Seeds, jobs, threads):
-	for i in range(threads): #Criamos as threads e atribuimos a função de cada uma
-		try:
-			thread = threading.Thread(target=get_links(Seeds[i],depth=0))
-			jobs.append(thread)
-		except:
-			print ('Erro na criação das threads!')
-			break
+def treads(LinksList, LinksFrom):
+	global jobs
+
+	for i in range(len(LinksList)): #Criamos as threads e atribuimos a função de cada uma
+		if 'LinksQueue' in LinksFrom:
+			tp = LinksQueue[i][1].pop()
+			depth = tp[1]
+			link = tp[0]
+			try:
+				thread = threading.Thread(target=get_links(link,depth=depth))
+				jobs.append(thread)
+			except:
+				print ('Erro na criação das threads!')
+				break
+		elif 'Seeds' in LinksFrom:
+			link = Seeds.pop()
+			try:
+				thread = threading.Thread(target=get_links(link,depth=0))
+				jobs.append(thread)
+			except:
+				print ('Erro na criação das threads!')
+				break
 	for j in jobs: #Começa as Threads
 		j.start()
 	for j in jobs: #Assegura que todas as threads terminaram
@@ -90,6 +104,14 @@ def addVisited(url,access_time):
 	global Visited
 	Visited[url] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(access_time))
 
+def removeURL(url,LinkFrom):
+	global Seeds, LinksQueue
+
+	if 'seeds' in LinkFrom.lower():
+		Seeds.remove(url)
+	elif 'linksqueue' in LinkFrom.lower():
+		LinksQueue.remove(url)
+
 def download_HTML(url, user_agent, num_retries):
 	global ServerTime
 	time_now = time.time() #Datetime.time()
@@ -125,8 +147,10 @@ def get_links(url, depth):
 
 	if rp.can_fetch(user_agent, url) and url not in Visited and meta:
 		htmldoc = download_HTML(url,user_agent,2)
+		#removeURL(url,LinkFrom)
 	else:
 		print('Bloqueada pelo protocolo de exlusão de robôs:', url)
+		#removeURL(url,LinkFrom)
 
 	tree = html.fromstring(htmldoc) #Parse o HTML e arruma se necessario
 	htmldoc = html.tostring(tree, pretty_print=True)
@@ -144,6 +168,8 @@ def get_links(url, depth):
 	print('Dominio:', dominio,'\n')
 	LinksClean = clean_links(Links,pagRaiz) #Função que determina se os links da lista de links são validos
 	del Links
+
+	LinksArchive = LinksArchive+LinksClean
 
 	if NumLinks < 500:
 		NumLinks_remaining = 500 - NumLinks
@@ -175,13 +201,19 @@ jobs = [] #Lista para as threads
 
 Max_DEPTH = 4 #Profundidade maxima
 
-threads = 3 #Numero de threads
+LinksArchive = []
+
+#threads = 3 #Numero de threads
 
 Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br'] #Urls de origem
 
-treads(Seeds, jobs, threads)
+if len(LinksQueue) == 0:
+	treads(Seeds,'Seeds')
+elif len(LinksQueue) > 1:
+	treads(LinksQueue,'LinksQueue')
 
 LinksQueue.reverse()
+
 '''
 while NumLinks < 500:
 	for j in range(len(LinksQueue)):
@@ -192,4 +224,9 @@ while NumLinks < 500:
 				link = tp[0]
 				get_links(link,depth)
 '''
-archiveLinks(LinksQueue, int(len(Seeds)))
+'''
+while NumLinks < 500:
+	if len(LinksQueue) > 1:
+		treads(LinksQueue, jobs, threads)
+'''
+#archiveLinks(LinksQueue, int(len(Seeds)))
