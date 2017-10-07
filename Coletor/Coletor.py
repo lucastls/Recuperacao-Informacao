@@ -63,12 +63,12 @@ def archiveLinks(LinksQueue, tam):
 	print ("Numero total de links coletados:", len(total))
 	arch.close()
 
-def checkTimeLastAccess(url, time_now):
-	if url in ServerTime.keys():
-		if time_now - ServerTime[url] > 30:
+def checkTimeLastAccess(domain, time_now):
+	if domain in ServerTime.keys():
+		if time_now - ServerTime[domain] > 30:
 			return 0
 		else:
-			return (30 - (time_now - ServerTime[url]) )
+			return (30 - (time_now - ServerTime[domain]) )
 	return 0
 
 def convert_encoding(data, utf8 = 'UTF-8'):
@@ -116,10 +116,10 @@ def download_HTML(url, user_agent, num_retries):
 	global ServerTime
 	time_now = time.time() #Datetime.time()
 	print ('Hora atual:', time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time_now)))
-	last_access = checkTimeLastAccess(url, time_now)
+	last_access = checkTimeLastAccess(getDominio(url), time_now)
 
 	if last_access == 0:
-		ServerTime[url] = time_now
+		ServerTime[getDominio(url)] = time_now
 		htmldoc = urllib.request.Request(url)
 		htmldoc.add_header('User-agent', user_agent)
 
