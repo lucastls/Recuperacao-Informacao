@@ -32,7 +32,6 @@ def treads(LinksList, LinksFrom, num_threads):
 			print ('Erro na criação das threads!')
 			break
 
-
 def archiveLinks(LinksClean):
 
 	global CollectedLinks
@@ -158,10 +157,8 @@ def getLinks(LinksList, LinksFrom):
 
 	if rp.can_fetch(user_agent, url) and url not in Visited and meta:
 		htmldoc = download_HTML(url,user_agent,2)
-		#removeURL(url,LinkFrom)
 	else:
 		print('Bloqueada pelo protocolo de exlusão de robôs:', url)
-		#removeURL(url,LinkFrom)
 
 	tree = html.fromstring(htmldoc) #Parse o HTML e arruma se necessario
 	htmldoc = html.tostring(tree, pretty_print=True)
