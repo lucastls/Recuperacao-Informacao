@@ -20,70 +20,33 @@ def noindex_nofollow(url):
         if not line.startswith('<meta'): continue
         if noindex or nofollow in line: return 0
     return 1
-'''
-def treads(LinksList, LinksFrom):
-	global jobs, Seeds, LinksQueue
 
-	for i in range(len(LinksList)): #Criamos as threads e atribuimos a função de cada uma
-		if 'LinksQueue' in LinksFrom:
-			tp = LinksQueue[i][1].pop()
-			depth = tp[1]
-			link = tp[0]
-			try:
-				thread = threading.Thread(target=get_links(link,depth=depth))
-				jobs.append(thread)
-			except:
-				print ('Erro na criação das threads!')
-				break
-		elif 'Seeds' in LinksFrom:
-			link = Seeds.pop()
-			try:
-				thread = threading.Thread(target=get_links(link,depth=0))
-				jobs.append(thread)
-			except:
-				print ('Erro na criação das threads!')
-				break
-	for j in jobs: #Começa as Threads
-		j.start()
-	for j in jobs: #Assegura que todas as threads terminaram
-		j.join()
-'''
 def treads(LinksList, LinksFrom, num_threads):
 	global jobs
 
 	for i in range(num_threads): #Criamos as threads e atribuimos a função de cada uma
 		try:
-			thread = threading.Thread(target=get_links,daemon=True,name='Thread_'+str(i),args=(LinksList,LinksFrom))
-			jobs.append(thread)
+			thread = threading.Thread(target=getLinks,daemon=True,name='Thread_'+str(i),args=(LinksList,LinksFrom))
+			thread.start()
 		except:
 			print ('Erro na criação das threads!')
 			break
-	for j in jobs: #Começa as Threads
-		j.start()
-	for j in jobs: #Assegura que todas as threads terminaram
-		j.join()
 
-'''def archiveLinks(LinksQueue, tam):
-	arch = open('Links_Coletados.txt', 'w')
-	stri = ''
-	total = list()
-	for j in range(tam):
-		for i in LinksQueue[j][1]:
-			total.append(i[0])
-	total = list(set(total))
-	for j in range(len(total)):
-		if total[j].startswith('http') or total[j].startswith('https'):
-			stri = stri + total[j] + '\n'
-	arch.write(stri)
-	print ("Numero total de links coletados:", len(total))
-	arch.close()'''
 
 def archiveLinks(LinksClean):
+
+	global CollectedLinks
+
+	CollectedLinks = list(set(CollectedLinks+LinksClean))
+
+def createFile(CollectedLinks):
+
 	arch = open('Links_Coletados.txt', 'w')
-	for i in range(len(LinksClean)):
-		link=str(LinksClean[i])+'\n'
+
+	for i in range(len(CollectedLinks)):
+		link=str(CollectedLinks[i])+'\n'
 		arch.write(link)
-	#print ("Numero total de links coletados:", len(total))
+	print ("Numero total de links coletados:", len(CollectedLinks))
 	arch.close()
 
 def checkTimeLastAccess(domain, time_now):
@@ -162,21 +125,34 @@ def download_HTML(url, user_agent, num_retries):
 		download_HTML(url, user_agent, num_retries)
 	return htmldoc
 
-def get_links(LinksList, LinksFrom):
-	global LinksArchive
+def getLinks(LinksList, LinksFrom):
+
+	global LinksArchive, NumLinks
+	lock = threading.Lock()
+
+	user_agent = 'Harry_BOTter'
+	user_agent_website = 'https://harrybotterbot.wordpress.com/'
+
 	if 'seeds' in LinksFrom.lower():
-		url=Seeds.pop()
-		depth = 0
+		if len(Seeds) > 0:
+			with lock:
+				url=Seeds.pop()
+				depth = 0
 	elif 'LinksQueue' in LinksFrom.lower():
 		if len(LinksQueue) > 0:
-			tp = LinksQueue[1][1].pop()
+			with lock:
+				tp = LinksQueue[0][1].pop()
 		if len(LinksQueue[1][1]) == 0:
-			del LinksQueue[1]
-		depth = tp[1]
-		url = tp[0]
+			with lock:
+				del LinksQueue[1]
+			depth = tp[1]
+			url = tp[0]
 
-	user_agent = 'elmbot'
-	global NumLinks
+	try:
+		url
+	except:
+		print('Fila de links vazia')
+		return 0
 	rp = robots(url) #Verifica robots.txt da pagina
 	meta = noindex_nofollow(url) #Verifica nofollow e noindex nos metatags da pagina
 
@@ -205,14 +181,17 @@ def get_links(LinksList, LinksFrom):
 	del Links
 
 	if NumLinks < 500:
-		NumLinks_remaining = 500 - NumLinks
-		if len(LinksClean) > NumLinks_remaining:
-			LinksClean = LinksClean[0:NumLinks_remaining]
+		with lock:
+			NumLinks_remaining = 500 - NumLinks
+			if len(LinksClean) > NumLinks_remaining:
+				LinksClean = LinksClean[0:NumLinks_remaining]
+
 
 	archiveLinks(LinksClean)
 
-	setNumLinks(LinksClean,NumLinks) #Atualiza a contagem de links
-	#print('Numero de links coletados: ',NumLinks)
+	with lock:
+		setNumLinks(LinksClean,NumLinks) #Atualiza a contagem de links
+
 	LinksD = [ [link,depth+1] for link in LinksClean ] #LinksD é uma lista de tuplas. Elemento da lista: (Link,Profundidade)
 
 	try: #Verifica se o dominio ja esta na fila de links
@@ -226,6 +205,7 @@ def get_links(LinksList, LinksFrom):
 		LinksQueue.append([dominio,LinksD])
 
 NumLinks = 0
+
 LinksQueue = [] #LinksQueue é uma lista de tuplas, onde cada tupla possui o dominio e a lista de links do determinado dominio.
                 #Elemento da lista: (Dominio, Lista de Links)
 ServerTime = {} #Dicionario com a hora do ultimo acesso a um servior,em segundos. Ex: {'http://www.globo.com':1505571681.6166034}
@@ -236,33 +216,17 @@ jobs = [] #Lista para as threads
 
 Max_DEPTH = 4 #Profundidade maxima
 
-LinksArchive = []
+CollectedLinks = []
 
-#threads = 3 #Numero de threads
+num_threads = 3 #Numero de threads
 
 Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br'] #Urls de origem
 
-if len(LinksQueue) == 0:
-	treads(Seeds,'Seeds',3)
-elif len(LinksQueue) > 1:
-	treads(LinksQueue,'LinksQueue',3)
-
-LinksQueue.reverse()
-
-'''
 while NumLinks < 500:
-	for j in range(len(LinksQueue)):
-		while (len(LinksQueue[j]) > 0):
-			tp = LinksQueue[j][1].pop()
-			depth = tp[1]
-			if depth < Max_DEPTH:
-				link = tp[0]
-				get_links(link,depth)
-'''
-'''
-while NumLinks < 500:
+	if len(Seeds) > 0:
+		treads(Seeds,'Seeds',num_threads)
 	if len(LinksQueue) > 1:
-		treads(LinksQueue, jobs, threads)
-'''
-print(len(LinksArchive))
-#archiveLinks(LinksQueue, int(len(Seeds)))
+		LinksQueue.reverse()
+		treads(LinksQueue, 'LinksQueue',num_threads)
+
+createFile(CollectedLinks)
