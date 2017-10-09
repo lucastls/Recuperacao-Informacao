@@ -175,9 +175,9 @@ def getLinks(LinksList, LinksFrom):
 	LinksClean = cleanLinks(Links,pagRaiz) #Função que determina se os links da lista de links são validos
 	del Links
 
-	if NumLinks < 500:
+	if NumLinks < 420:
 		with lock:
-			NumLinks_remaining = 500 - NumLinks
+			NumLinks_remaining = 400 - NumLinks
 			if len(LinksClean) > NumLinks_remaining:
 				LinksClean = LinksClean[0:NumLinks_remaining]
 
@@ -216,7 +216,9 @@ num_threads = int(input('Escolha o número de threads: ')) #Numero de threads
 
 Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br'] #Urls de origem
 
-while NumLinks < 500:
+start_time = time.time() #Registra o tempo inicial de processamento
+
+while NumLinks < 400:
 	if len(Seeds) > 0:
 		treads(Seeds,'Seeds',num_threads)
 	if len(LinksQueue) > 1:
@@ -224,4 +226,4 @@ while NumLinks < 500:
 		treads(LinksQueue, 'LinksQueue',num_threads)
 
 createFile(CollectedLinks)
-print ('Harry_BOTter, https://harrybotterbot.wordpress.com/\nArquivo Links_Coletados.txt criado!')
+print ('Harry_BOTter, https://harrybotterbot.wordpress.com/\nArquivo Links_Coletados.txt criado!\n(+/-)%s segundos de execução.' % (time.time() - start_time))
