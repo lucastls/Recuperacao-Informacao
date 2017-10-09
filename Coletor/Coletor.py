@@ -1,4 +1,4 @@
-import urllib.request, urllib.parse, urllib.error, cchardet, time, threading, datetime 
+import urllib.request, urllib.parse, urllib.error, cchardet, time, threading, datetime
 from lxml import etree, cssselect, html
 from urllib.error import URLError, HTTPError, ContentTooShortError
 from urllib import robotparser
@@ -19,7 +19,7 @@ def noindexNofollow(url):
         if noindex or nofollow in line: return 0
     return 1
 
-def treads(LinksList, LinksFrom, num_threads):
+def createThreads(LinksList, LinksFrom, num_threads):
 	global jobs
 
 	for i in range(num_threads): #Criamos as threads e atribuimos a função de cada uma
@@ -89,22 +89,14 @@ def addVisited(url, access_time):
 
 	Visited[url] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(access_time))
 
-def removeURL(url, LinkFrom):
-	global Seeds, LinksQueue
-
-	if 'seeds' in LinkFrom.lower():
-		Seeds.remove(url)
-	elif 'linksqueue' in LinkFrom.lower():
-		LinksQueue.remove(url)
-
 def downloadHTML(url, user_agent, num_retries):
 	global ServerTime
 	time_now = time.time() #Datetime.time()
 
 	print ('Dados da requisição atual:', time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time_now)))
-	last_access = checkTimeLastAccess(getDominio(url), time_now)
+	last_access = checkTimeLastAccess(getPagRaiz(url), time_now)
 	if last_access == 0:
-		ServerTime[getDominio(url)] = time_now
+		ServerTime[getPagRaiz(url)] = time_now
 		htmldoc = urllib.request.Request(url)
 		htmldoc.add_header('User-agent', user_agent)
 
@@ -132,17 +124,17 @@ def getLinks(LinksList, LinksFrom):
 	user_agent_website = 'https://harrybotterbot.wordpress.com/'
 
 	if 'seeds' in LinksFrom.lower():
-		if len(Seeds) > 0:
+		if len(LinksList) > 0:
 			with lock:
-				url=Seeds.pop()
+				url=LinksList.pop()
 				depth = 0
-	elif 'LinksQueue' in LinksFrom.lower():
-		if len(LinksQueue) > 0:
+	elif 'linksqueue' in LinksFrom.lower():
+		if len(LinksList) > 0:
 			with lock:
-				tp = LinksQueue[0][1].pop()
-		if len(LinksQueue[1][1]) == 0:
+				tp = LinksList[0][1].pop()
+		if len(LinksList[1][1]) == 0:
 			with lock:
-				del LinksQueue[1]
+				del LinksList[1]
 			depth = tp[1]
 			url = tp[0]
 
@@ -154,8 +146,8 @@ def getLinks(LinksList, LinksFrom):
 	rp = robots(url) #Verifica robots.txt da pagina
 	meta = noindexNofollow(url) #Verifica nofollow e noindex nos metatags da pagina
 	if rp.can_fetch(user_agent, url) and meta:
-		if url not in Visited and depth < Max_DEPTH:	
-			htmldoc = downloadHTML(url,user_agent,2) 
+		if url not in Visited and depth < Max_DEPTH:
+			htmldoc = downloadHTML(url,user_agent,2)
 	else:
 		print('Bloqueada pelo protocolo de exlusão de robôs:', url)
 
@@ -175,28 +167,31 @@ def getLinks(LinksList, LinksFrom):
 	LinksClean = cleanLinks(Links,pagRaiz) #Função que determina se os links da lista de links são validos
 	del Links
 
-	if NumLinks < 420:
-		with lock:
-			NumLinks_remaining = 400 - NumLinks
+	if NumLinks < 500:
+			NumLinks_remaining = 500 - NumLinks
 			if len(LinksClean) > NumLinks_remaining:
-				LinksClean = LinksClean[0:NumLinks_remaining]
-
-	with lock:
-		archiveLinks(LinksClean)
-		setNumLinks(LinksClean,NumLinks) #Atualiza a contagem de links
+				with lock:
+					LinksClean = LinksClean[0:NumLinks_remaining]
+					archiveLinks(LinksClean)
+					setNumLinks(LinksClean,NumLinks) #Atualiza a contagem de links
+			else:
+				with lock:
+					archiveLinks(LinksClean)
+					setNumLinks(LinksClean,NumLinks) #Atualiza a contagem de links
 
 	LinksD = [ [link,depth+1] for link in LinksClean ] #LinksD é uma lista de tuplas. Elemento da lista: (Link,Profundidade)
 
-	try: #Verifica se o dominio ja esta na fila de links
-		pos = [i[0] for i in LinksQueue].index(dominio)
-	except:
-		pos = -1
+	with lock:
+		try: #Verifica se o dominio ja esta na fila de links
+			pos = [i[0] for i in LinksQueue].index(dominio)
+		except:
+			pos = -1
 
-	if pos > -1: #Se o dominio ja esta na fila de links acrescesta os links na sua fila, caso contrario a sua lista é criada
-		PLinks = LinksQueue[pos][1]
-		LinksQueue[pos][1] = PLinks+LinksD
-	else:
-		LinksQueue.append([dominio,LinksD])
+		if pos > -1: #Se o dominio ja esta na fila de links acrescesta os links na sua fila, caso contrario a sua lista é criada
+			PLinks = LinksQueue[pos][1]
+			LinksQueue[pos][1] = PLinks+LinksD
+		else:
+			LinksQueue.append([dominio,LinksD])
 
 NumLinks = 0
 
@@ -205,8 +200,6 @@ LinksQueue = [] #LinksQueue é uma lista de tuplas, onde cada tupla possui o dom
 ServerTime = {} #Dicionario com a hora do ultimo acesso a um servior,em segundos. Ex: {'http://www.globo.com':1505571681.6166034}
 
 Visited = {} #Dicionario de Visitados
-
-jobs = [] #Lista para as threads
 
 Max_DEPTH = 4 #Profundidade maxima
 
@@ -218,12 +211,12 @@ Seeds = ['http://family.disney.com','http://www.globo.com','http://www.r7.com.br
 
 start_time = time.time() #Registra o tempo inicial de processamento
 
-while NumLinks < 400:
+while NumLinks < 500:
 	if len(Seeds) > 0:
-		treads(Seeds,'Seeds',num_threads)
+		createThreads(Seeds,'Seeds',num_threads)
 	if len(LinksQueue) > 1:
 		LinksQueue.reverse()
-		treads(LinksQueue, 'LinksQueue',num_threads)
+		createThreads(LinksQueue, 'LinksQueue',num_threads)
 
 createFile(CollectedLinks)
 print ('Harry_BOTter, https://harrybotterbot.wordpress.com/\nArquivo Links_Coletados.txt criado!\n(+/-)%s segundos de execução.' % (time.time() - start_time))
