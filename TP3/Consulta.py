@@ -137,29 +137,25 @@ def main():
 
 	menu=1
 	while (menu):
-		termosPesquisa = input('Digite o que deseja pesquisar\n\nPesquisa: ')
-		termosPesquisa = termosPesquisa.split(' ')
-		pesquisas=1
-
-		print('\nDigite o metodo qual deseja usar\n1 - Modelo Vetorial\n2 - Modelo Booleano\n3 - Modelo Probabilistico\n4 - Fazer outra pesquisa\n5 - Sair\n')
-
-		op = int(input('Método: '))
-		print('Opção escolhida:',op)
-		if op == 1:
-			print('check')
-			resultados = SimTFIDF(N, termosPesquisa, docsNorma)
-			print(resultados)
-			print('\n\n')
-		elif op == 2: break
-		elif op == 3: 
-			resultados = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75)
-			print(resultados,'\n\n')
-		elif op == 4:
-			menu=0
-		else:
-			continue
-
-		menu=0
+		termosPesquisa = input('\nDigite o termo que deseja pesquisar.\n\nPesquisa: ').split(' ')
+		quest=1
+		while (quest):
+			op = int(input('\nDigite o metodo qual deseja usar:\n1 - Modelo Vetorial\n2 - Modelo Booleano\n3 - Modelo Probabilistico\n4 - Fazer outra pesquisa\n5 - Sair\n\nMétodo: '))
+			if op == 1:
+				resultados = SimTFIDF(N, termosPesquisa, docsNorma)
+				print(resultados, '\n')
+			elif op == 2: 
+				break
+			elif op == 3: 
+				resultados = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75)
+				print(resultados, '\n')
+			elif op == 4:
+				quest=0
+			elif op == 5:
+				quest=0
+				menu=0
+			else:
+				continue
 
 if __name__ == "__main__":
     main()
