@@ -11,7 +11,7 @@ def LoadTitlePerDoc(indexFilePath):
 
 	All = All.strip().split('\n')
 
-	for i in range(int(len(All)/20)):
+	for i in range(int(len(All))):
 		content = All[i]
 
 		docId, title = content.split(';',1)
@@ -20,7 +20,7 @@ def LoadTitlePerDoc(indexFilePath):
 
 	return titlePerDoc
 
-def SimBoolean(termosPesquisa, tipo):
+def SimBoolean(termosPesquisa, tipo, pesq): #pesq = 0 retorna docId, pesq = 1 retorna titulo
 	docsTermos = {}
 	for termo in termosPesquisa:
 		docsList = Index[termo].keys()
@@ -38,7 +38,11 @@ def SimBoolean(termosPesquisa, tipo):
 		for termo, docLista in docsTermos.items():
 			resultados = resultados + docLista
 
-	return resultados
+	if pesq=0:
+		return resultados
+	if pesq=1:
+		for i in range(len(resultados)):
+			resultados[i] = titlePerDoc[resultados[i][0]]
 
 def TF(Index, termo, docId):
 
@@ -68,7 +72,7 @@ def TFIDF(Index, termo, docId, termsIDF, N):
 
 	return tf*idf
 
-def SimTFIDF(N, termosPesquisa, docsNorma):
+def SimTFIDF(N, termosPesquisa, docsNorma, pesq):#pesq = 0 retorna docId, pesq = 1 retorna titulo
 
 	termosEmComum = termosPesquisa
 
@@ -91,14 +95,20 @@ def SimTFIDF(N, termosPesquisa, docsNorma):
 		pesoAcc = pesoAcc/docsNorma[docId]
 		resultados.append([docId, pesoAcc])
 
-	for i in range(len(resultados)):
-		resultados[i][0] = titlePerDoc[resultados[i][0]]
-
 	resultados.sort(key=itemgetter(1))
 
-	return resultados
+	resultados2 = [int(element[0]) for element in resultados]
+	del resultados
 
-def SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75):
+	if pesq == 0:
+		return resultados2
+
+	if pesq == 1:
+		for i in range(len(resultados2)):
+			resultados2[i] = titlePerDoc[resultados2[i]]
+		return resultados2
+
+def SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, pesq, k = 1, b = 0.75):#pesq = 0 retorna docId, pesq = 1 retorna titulo
 
 	termosEmComum = termosPesquisa
 
@@ -111,12 +121,14 @@ def SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75
 		for termo in termosEmComum:
 			betaBM25 = BetaBM25(Index, termo, docId, docsAvgLen, docsTam, k, b)
 			pesoAcc = pesoAcc + betaBM25*idfBM25[termo]
-		resultados.append([docId, pesoAcc])
+		resultados.append(docId)
 
-	for i in range(len(resultados)):
-		resultados[i][0] = titlePerDoc[resultados[i][0]]
-
-	return resultados
+	if pesq == 0:
+		return resultados
+	if pesq == 1:
+		for i in range(len(resultados)):
+			resultados[i] = titlePerDoc[resultados[i]]
+		return resultados
 
 def BetaBM25 (Index, termo, docId, avgDocLen, docsTam,  k = 1, b = 0.75):
 
@@ -128,7 +140,7 @@ def BetaBM25 (Index, termo, docId, avgDocLen, docsTam,  k = 1, b = 0.75):
 		betaBM25 = ((k+1)*freq) / (k*((1-b) + (b*docsTam[docId]/avgDocLen))+freq)
 
 	return betaBM25
-
+'''
 termosPesquisa="Belo Horizonte".split(' ')
 resultados1 = SimTFIDF(N, termosPesquisa, docsNorma)
 resultados2 = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75)
@@ -140,7 +152,7 @@ resultados4 = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1
 termosPesquisa="São Paulo".split(' ')
 resultados5 = SimTFIDF(N, termosPesquisa, docsNorma)
 resultados6 = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75)
-
+'''
 def main():
 
 	Index = LoadIndex('Index.dat')
@@ -167,12 +179,13 @@ def main():
 		while (quest):
 			op = int(input('\nDigite o metodo qual deseja usar:\n1 - Modelo Vetorial\n2 - Modelo Booleano\n3 - Modelo Probabilistico\n4 - Fazer outra pesquisa\n5 - Sair\n\nMétodo: '))
 			if op == 1:
-				resultados = SimTFIDF(N, termosPesquisa, docsNorma)
+				resultados = SimTFIDF(N, termosPesquisa, docsNorma, pesq=1)
 				print(resultados, '\n')
 			elif op == 2:
-				break
+				resultados = SimBoolean(termosPesquisa, tipo='and', pesq=1)
+				print(resultados, '\n')
 			elif op == 3:
-				resultados = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75)
+				resultados = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, pesq=1 k = 1, b = 0.75)
 				print(resultados, '\n')
 			elif op == 4:
 				quest=0
