@@ -10,7 +10,7 @@ def LoadIndex(indexFilePath):
 
 	All = All.strip().split('\n')
 
-	for i in range(int(len(All)/10)):
+	for i in range(int(len(All))):
 		content = All[i]
 
 		term = content.split('[',1)[0]
@@ -88,7 +88,7 @@ def AvgDocLen(docsTam, docsList):
 
 def main():
 
-	Index = LoadIndex('Index.dat')
+	Index = LoadIndex("Index.dat2")
 	print('Indice carregado')
 
 	#Cria lista de termos a partir do indice
@@ -118,6 +118,6 @@ def main():
 	json.dump(docsTam, open("docsTam.dat",'w'))
 	json.dump(docsAvgLen, open("docsAvgLen.dat",'w'))
 
-    
+
 if __name__ == "__main__":
     main()

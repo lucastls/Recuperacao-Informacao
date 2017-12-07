@@ -20,12 +20,25 @@ def LoadTitlePerDoc(indexFilePath):
 
 	return titlePerDoc
 
-def Bolean(termosPesquisa):
-	resultados = []
+def SimBoolean(termosPesquisa, tipo):
+	docsTermos = {}
 	for termo in termosPesquisa:
 		docsList = Index[termo].keys()
+		docsTermos[termo]=[]
 		for docId in docsList:
-			resultados.append()
+			docsTermos[termo].append(docId)
+
+	if tipo == 'and':
+		resultados=docsTermos[termosPesquisa[termo]]
+		for i in range(1,len(termosPesquisa)):
+			termo = termosPesquisa[i]
+			resultados = list(set(resultados) & set(docsTermos[termo]))
+	if tipo == 'or':
+		resultados=[]
+		for termo, docLista in docsTermos.items():
+			resultados = resultados + docLista
+
+	return resultados
 
 def TF(Index, termo, docId):
 
@@ -113,8 +126,20 @@ def BetaBM25 (Index, termo, docId, avgDocLen, docsTam,  k = 1, b = 0.75):
 	else:
 		#betaBM25 = ((k+1)* freq)/((k*((1-b) + ((b*docsTam[docId])/avgDocLen)))+freq)
 		betaBM25 = ((k+1)*freq) / (k*((1-b) + (b*docsTam[docId]/avgDocLen))+freq)
-	
+
 	return betaBM25
+
+termosPesquisa="Belo Horizonte".split(' ')
+resultados1 = SimTFIDF(N, termosPesquisa, docsNorma)
+resultados2 = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75)
+
+termosPesquisa="Irlanda".split(' ')
+resultados3 = SimTFIDF(N, termosPesquisa, docsNorma)
+resultados4 = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75)
+
+termosPesquisa="São Paulo".split(' ')
+resultados5 = SimTFIDF(N, termosPesquisa, docsNorma)
+resultados6 = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75)
 
 def main():
 
@@ -144,9 +169,9 @@ def main():
 			if op == 1:
 				resultados = SimTFIDF(N, termosPesquisa, docsNorma)
 				print(resultados, '\n')
-			elif op == 2: 
+			elif op == 2:
 				break
-			elif op == 3: 
+			elif op == 3:
 				resultados = SimBM25(Index, termosPesquisa, docsAvgLen, idfBM25, docsTam, k = 1, b = 0.75)
 				print(resultados, '\n')
 			elif op == 4:
@@ -159,4 +184,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
