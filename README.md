@@ -1,5 +1,7 @@
 # Recuperacao_Informacao
 
+Disciplina de Recuperação de Informação do CEFET-MG
+
 ### Instalar pip
 
 pip é um gerenciador de pacotes para python
