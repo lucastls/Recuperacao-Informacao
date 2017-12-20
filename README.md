@@ -1,4 +1,4 @@
-# Recuperacao_Informacao
+# Recuperação de Informação
 
 Disciplina de Recuperação de Informação do CEFET-MG
 
