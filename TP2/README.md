@@ -46,8 +46,8 @@ Para desativar o ambiente virtual, não importa o diretório que esteja, basta e
 ```
 $ deactivate
 ```
-### Executando o Coletor
+### Executando o Indexador
 
-Executar coletor
+Executar indexador
 ```
-$ python Coletor.py
+$ python Indexador.py
